@@ -13,3 +13,5 @@ It has a [Vaadin Flow](https://vaadin.com/) UI to upload an image and extract st
 
 You can run the application by executing the `main` method in the `com.example.application.Application` class.
 Alternatively, you can run the `mvn` command in the project root directory.
+
+To compile the application run mvn clean package and then mvn spring-boot:run 
