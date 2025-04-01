@@ -235,7 +235,7 @@ public class ShoesView extends VerticalLayout {
                         HttpPost("https://api.openai.com/v1/chat/completions");
                 request.setEntity(new StringEntity(payload.toString()));
                 request.addHeader("Content-Type", "application/json");
-                request.addHeader("Authorization", "Bearer " + "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"); //
+                request.addHeader("Authorization", "Bearer " + ""); //
 
                 // Execute the request
                 try (CloseableHttpClient client = HttpClients.createDefault()) {
