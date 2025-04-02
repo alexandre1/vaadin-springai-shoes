@@ -94,9 +94,7 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
         </dependency>
-
     </dependencies>
-
     <build>
         <defaultGoal>spring-boot:run</defaultGoal>
         <plugins>
@@ -146,7 +144,6 @@
             </plugin>
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <!-- Production mode is activated using -Pproduction -->
@@ -182,7 +179,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>it</id>
             <build>
@@ -228,6 +224,5 @@
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 </project>

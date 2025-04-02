@@ -194,7 +194,5 @@ public class ShoesView extends VerticalLayout {
         items.setItems(receipt.lineItems());
         add(items);
     }
-
-
 }
 
