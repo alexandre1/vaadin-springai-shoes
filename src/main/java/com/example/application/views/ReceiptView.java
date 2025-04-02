@@ -1,6 +1,5 @@
 package com.example.application.views;
 
-import com.example.application.service.DeepSeekService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Text;
@@ -18,7 +17,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.security.core.parameters.P;
 import org.springframework.util.MimeTypeUtils;
 
 import java.io.ByteArrayInputStream;
