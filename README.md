@@ -3,6 +3,7 @@
 This example shows how to use the [Spring AI](https://docs.spring.io/spring-ai/reference/) to extract structured data from images in Java.
 It has a [Vaadin Flow](https://vaadin.com/) UI to upload an image and extract structured data from it.
 
+It provide also a shoes recognition view-
 
 ## Requirements
 
