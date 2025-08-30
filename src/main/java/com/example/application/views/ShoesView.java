@@ -3,6 +3,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.editor.Editor;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
@@ -20,7 +22,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.util.MimeTypeUtils;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.util.MimeTypeUtils;
+import serpapi.GoogleSearch;
+import serpapi.SerpApiSearchException;
 
+import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -37,7 +56,8 @@ import java.util.List;
 @PageTitle("Shoes")
 @Menu(title = "Shoes", order = 1)
 public class ShoesView extends VerticalLayout {
-    public record LineItem(String website, String merchant, String brand, String name, BigDecimal price) {
+    public record LineItem(String website, String merchant, String brand, String name,
+                           BigDecimal price, String imageUrl) {
     }
 
     public record Receipt(String address, BigDecimal total, List<LineItem> lineItems) {
@@ -54,7 +74,7 @@ public class ShoesView extends VerticalLayout {
         var upload = new Upload(buffer);
         var output = new Div();
 
-        Text instructions = new Text("Upload an image of a receipt. The AI will extract the details and show them below.");
+        Text instructions = new Text("Upload an image of a shoes. The AI will extract the details and show them below.");
         add(instructions, upload, output);
 
         upload.setAcceptedFileTypes("image/*");
@@ -82,7 +102,8 @@ public class ShoesView extends VerticalLayout {
 
                         showReceipt(receipt);
                         //showReceipt(receipt);
-                        callForShop(builder, buffer);
+                        //callForShop(builder, buffer);
+                        callForShopWithSerpApi(builder, buffer);
                         upload.clearFileList();
                       //  callForShop (builder, buffer, receipt.lineItems().get(0).brand, receipt.lineItems.get(0).name);
 
@@ -94,7 +115,6 @@ public class ShoesView extends VerticalLayout {
                 }});
 
     }
-
     public void callForShop (ChatClient.Builder builder, MemoryBuffer buffer) {
         var client = builder.build();
         var receiptShoes = client.prompt()
@@ -127,6 +147,104 @@ public class ShoesView extends VerticalLayout {
 
 
     }
+
+    public void callForShopWithSerpApi(ChatClient.Builder builder, MemoryBuffer buffer) throws Exception {
+        var client = builder.build();
+        var receiptShoes = client.prompt()
+                .user(msg -> msg.text("Extract brand and name from the image")
+                        .media(MimeTypeUtils.IMAGE_JPEG, new InputStreamResource(buffer.getInputStream())))
+                .call()
+                .entity(Receipt.class);
+
+        LineItem shoe = receiptShoes.lineItems().get(0);
+        String query = shoe.brand() + " " + shoe.name();
+
+        Map<String, String> params = new HashMap<>();
+        params.put("q", query);
+        params.put("location", "United States");
+        params.put("engine", "google");
+        params.put("tbm", "shop");
+        params.put("api_key", env.getProperty("SERPAPI_KEY"));
+
+        GoogleSearch search = new GoogleSearch(params);
+        JsonObject json = search.getJson();
+
+        if (!json.has("shopping_results")) {
+            add(new Paragraph("No shopping results found for: " + query));
+            return;
+        }
+
+        JsonArray results = json.getAsJsonArray("shopping_results");
+        List<LineItem> shops = new ArrayList<>();
+
+        for (var el : results) {
+            JsonObject o = el.getAsJsonObject();
+            String imageUrl = "";
+
+            // Extract image URL - SerpAPI typically provides thumbnail images
+            if (o.has("thumbnail")) {
+                imageUrl = o.get("thumbnail").getAsString();
+            }
+
+            if (o.has("product_link")) {
+                System.out.println("LINK " + o.get("product_link").getAsString() );
+            }
+            shops.add(new LineItem(
+                    o.has("product_link") ? o.get("product_link").getAsString() : "",
+                    o.has("source") ? o.get("source").getAsString() : "",
+                    shoe.brand(),
+                    o.has("title") ? o.get("title").getAsString() : "",
+                    o.has("price") ? new BigDecimal(o.get("price").getAsString().replaceAll("[^0-9.]", "")) : BigDecimal.ZERO,
+                    imageUrl
+            ));
+        }
+
+        displayShoppingResults(shops);
+    }
+
+    private void displayShoppingResults(List<LineItem> shops) {
+        // Create a custom grid with images
+        Grid<LineItem> grid = new Grid<>(LineItem.class);
+
+        // Remove default columns and set up custom ones
+        grid.removeAllColumns();
+
+        // Add image column
+        grid.addComponentColumn(item -> {
+            if (item.imageUrl() != null && !item.imageUrl().isEmpty()) {
+                Image image = new Image(item.imageUrl(), "Product Image");
+                image.setWidth("80px");
+                image.setHeight("80px");
+                image.getStyle().set("object-fit", "cover");
+                return image;
+            } else {
+                return new Div(new Text("No image"));
+            }
+        }).setHeader("Image").setWidth("100px");
+
+        // Add other columns
+        grid.addColumn(LineItem::brand).setHeader("Brand").setAutoWidth(true);
+        grid.addColumn(LineItem::name).setHeader("Product").setAutoWidth(true);
+        grid.addColumn(LineItem::merchant).setHeader("Merchant").setAutoWidth(true);
+        grid.addColumn(item -> item.price().toString() + " €").setHeader("Price").setAutoWidth(true);
+
+        // Add website link column
+        grid.addComponentColumn(item -> {
+            if (item.website() != null && !item.website().isEmpty()) {
+                Anchor link = new Anchor(item.website(), "View details");
+                link.setTarget("_blank");
+                return link;
+            } else {
+                return new Div(new Text("No link"));
+            }
+        }).setHeader("Website").setAutoWidth(true);
+
+        grid.setItems(shops);
+
+        add(new Paragraph("Found " + shops.size() + " stores:"));
+        add(grid);
+    }
+
     @Autowired
     private Environment env;
     public static String getShowImage(String name) throws Exception {

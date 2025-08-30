@@ -3,12 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <!-- Project from https://start.vaadin.com/project/2f5be350-ec75-4117-a9ae-7903ae58ab48 -->
+
     <groupId>com.example.application</groupId>
     <artifactId>java-ai-image-data-extraction</artifactId>
-    <name>java-ai-image-data-extraction</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <name>java-ai-image-data-extraction</name>
 
     <properties>
         <java.version>17</java.version>
@@ -20,9 +20,15 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.6</version>
+        <relativePath/>
     </parent>
 
+    <!-- 🔑 Dépôts -->
     <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
         <repository>
             <id>Vaadin Directory</id>
             <url>https://maven.vaadin.com/vaadin-addons</url>
@@ -36,6 +42,7 @@
         </repository>
     </repositories>
 
+    <!-- 🔧 Gestion des BOM -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -55,22 +62,33 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- 📦 Dépendances -->
     <dependencies>
+        <!-- Vaadin -->
         <dependency>
             <groupId>com.vaadin</groupId>
-            <!-- Replace artifactId with vaadin-core to use only free components -->
             <artifactId>vaadin</artifactId>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-spring-boot-starter</artifactId>
         </dependency>
+
+        <!-- Icônes Line Awesome -->
         <dependency>
             <groupId>org.parttio</groupId>
             <artifactId>line-awesome</artifactId>
             <version>2.1.0</version>
         </dependency>
 
+        <!-- Gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
@@ -80,6 +98,21 @@
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- Spring AI (OpenAI) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- ✅ SerpApi -->
+        <dependency>
+            <groupId>com.github.serpapi</groupId>
+            <artifactId>google-search-results-java</artifactId>
+            <version>v2.0.0</version>
+        </dependency>
+
+        <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -90,11 +123,9 @@
             <artifactId>vaadin-testbench-junit5</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-        </dependency>
     </dependencies>
+
+    <!-- ⚙️ Build -->
     <build>
         <defaultGoal>spring-boot:run</defaultGoal>
         <plugins>
@@ -102,34 +133,8 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.43.0</version>
-                <configuration>
-                    <java>
-                        <eclipse>
-                            <version>4.33</version>
-                            <file>${project.basedir}/eclipse-formatter.xml</file>
-                        </eclipse>
-                    </java>
-                    <!-- Uncomment to format TypeScript files
-                        <typescript>
-                        <includes>
-                            <include>src/main/frontend/**/*.ts</include>
-                            <include>src/main/frontend/**/*.tsx</include>
-                        </includes>
-                        <excludes>
-                            <exclude>src/main/frontend/generated/**</exclude>
-                        </excludes>
-                        <prettier>
-                            <prettierVersion>3.3.3</prettierVersion>
-                            <configFile>.prettierrc.json</configFile>
-                        </prettier>
-                    </typescript>
-                -->
-                </configuration>
-            </plugin>
+
+            <!-- Vaadin -->
             <plugin>
                 <groupId>com.vaadin</groupId>
                 <artifactId>vaadin-maven-plugin</artifactId>
@@ -142,87 +147,21 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Spotless pour formatter -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <eclipse>
+                            <version>4.33</version>
+                            <file>${project.basedir}/eclipse-formatter.xml</file>
+                        </eclipse>
+                    </java>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <!-- Production mode is activated using -Pproduction -->
-            <id>production</id>
-            <dependencies>
-                <!-- Exclude development dependencies from production -->
-                <dependency>
-                    <groupId>com.vaadin</groupId>
-                    <artifactId>vaadin-core</artifactId>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>com.vaadin</groupId>
-                            <artifactId>vaadin-dev</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.vaadin</groupId>
-                        <artifactId>vaadin-maven-plugin</artifactId>
-                        <version>${vaadin.version}</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>build-frontend</goal>
-                                </goals>
-                                <phase>compile</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>it</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>start-spring-boot</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>start</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>stop-spring-boot</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>stop</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Runs the integration tests (*IT) after the server is started -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>integration-test</goal>
-                                    <goal>verify</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <trimStackTrace>false</trimStackTrace>
-                            <enableAssertions>true</enableAssertions>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
